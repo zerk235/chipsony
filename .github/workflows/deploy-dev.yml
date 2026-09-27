@@ -31,4 +31,20 @@ jobs:
         env:
           MINI_APPS_ACCESS_TOKEN: ${{ secrets.VK_DEPLOY_TOKEN }}
           MINI_APPS_APP_ID: 54788608
-        run: npx vk-miniapps-deploy
+        run: |
+          set +e
+          npx vk-miniapps-deploy > deploy.log 2>&1
+          code=$?
+          cat deploy.log
+          {
+            echo '### Вывод деплоя'
+            echo '```'
+            cat deploy.log
+            echo '```'
+            if [ $code -ne 0 ]; then
+              echo ''
+              echo '**Деплой не удался.** В 9 случаях из 10 истёк токен доступа VK.'
+              echo 'Обновить: Settings → Secrets and variables → Actions → VK_DEPLOY_TOKEN.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $code
