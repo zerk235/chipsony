@@ -47,8 +47,17 @@ jobs:
           MINI_APPS_APP_ID: 54788608
         run: |
           set +e
-          npx vk-miniapps-deploy > deploy.log 2>&1
-          code=$?
+          : > deploy.log
+          for i in 1 2 3; do
+            echo "--- попытка $i из 3 ---" >> deploy.log
+            npx vk-miniapps-deploy >> deploy.log 2>&1
+            code=$?
+            [ $code -eq 0 ] && break
+            if [ $i -lt 3 ]; then
+              echo "не удалось, повтор через 30 сек" >> deploy.log
+              sleep 30
+            fi
+          done
           cat deploy.log
           {
             echo '### Вывод деплоя'
@@ -57,8 +66,9 @@ jobs:
             echo '```'
             if [ $code -ne 0 ]; then
               echo ''
-              echo '**Деплой не удался.** В 9 случаях из 10 истёк токен доступа VK.'
-              echo 'Обновить: Settings → Secrets and variables → Actions → VK_DEPLOY_TOKEN.'
+              echo '**Деплой не удался после 3 попыток.**'
+              echo 'Частая причина — временная ошибка VK `Access denied: invalid file`, лечится повтором.'
+              echo 'Если в тексте ошибки про токен — обнови секрет VK_DEPLOY_TOKEN.'
             fi
           } >> "$GITHUB_STEP_SUMMARY"
           exit $code
