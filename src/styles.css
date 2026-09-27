@@ -1,0 +1,104 @@
+html[data-chipsony-theme='dark'] body {
+  background: #0a0a0a;
+}
+
+html[data-chipsony-theme='light'] body {
+  background: #ffffff;
+}
+
+@keyframes chipFly {
+  0% {
+    transform: translate(0, 0) scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  14% {
+    transform: translate(0, -18px) scale(1.12) rotate(-8deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(calc(var(--dx) * 0.45), calc(var(--dy) * 0.3 - 38px)) scale(0.92) rotate(10deg);
+    opacity: 1;
+  }
+  82% {
+    transform: translate(calc(var(--dx) * 0.88), var(--dy)) scale(0.55) rotate(20deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.2) rotate(28deg);
+    opacity: 0;
+  }
+}
+
+.chip-fly {
+  position: fixed;
+  z-index: 1000;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  background: linear-gradient(135deg, #ffb800, #ff6b00);
+  box-shadow: 0 10px 22px rgba(255, 107, 0, 0.45);
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: chipFly 680ms cubic-bezier(0.32, 0.02, 0.24, 1) forwards;
+}
+
+@keyframes cartRing {
+  0% {
+    transform: translate(-50%, -50%) scale(0.55);
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.7);
+    opacity: 0;
+  }
+}
+
+.cart-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 108px;
+  height: 52px;
+  border-radius: 26px;
+  border: 2px solid #ffb800;
+  pointer-events: none;
+  animation: cartRing 520ms ease-out forwards;
+}
+
+@keyframes cartBump {
+  0% {
+    transform: scale(1);
+  }
+  22% {
+    transform: scale(0.95);
+  }
+  55% {
+    transform: scale(1.06);
+  }
+  78% {
+    transform: scale(0.99);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.cart-bump {
+  animation: cartBump 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip-fly,
+  .cart-ring {
+    display: none;
+  }
+
+  .cart-bump {
+    animation: none;
+  }
+}

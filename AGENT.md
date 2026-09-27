@@ -1,35 +1,55 @@
 # AGENT.md — правила работы над проектом
 
 ## Что это
-VK Mini App «Чипсоны» — афиша событий + корзина + оформление заказа.
-Сейчас это прототип: афиша зашита в код (`src/App.jsx`, `EVENTS`), оплата имитируется, БД нет.
+VK Mini App «Чипсоны» — афиша событий, корзина, оформление.
+Прототип: афиша в коде (`src/data/events.js`), оплата имитация, базы данных нет.
 Цель — релиз MVP: бэкенд + регистрация с QR-билетом.
 
+## Если ты тут впервые (5 минут)
+1. Установи [Node.js LTS](https://nodejs.org) (если ещё нет)
+2. Открой терминал в папке проекта
+3. Windows: двойной клик по `start.cmd`. Mac/Linux: `./start.sh`
+4. Открой http://localhost:3000 — приложение работает
+5. Изменил файл → страница обновится сама (перезапускать ничего не нужно)
+
+Если хочешь через терминал: `npm install` (один раз), потом `npm run dev`.
+
 ## Стек
-Vite + React 18 + VKUI + `@vkontakte/vk-bridge`. Сборка — Vite.
+Vite 8 + React 18 + VKUI 8 + `@vkontakte/vk-bridge`. Сборка — Vite.
 
 ## Команды
-- `npm install` — зависимости один раз
 - `npm run dev` — локальный сервер http://localhost:3000
+- `npm run check` — проверка сборки (обязательно перед коммитом)
 - `npm run build` — собрать в `dist/`
-- `npm run deploy` — собрать + залить на VK-хостинг + обновить URL в dev.vk.com (токен сохранён, авторизация не нужна)
+- `npm run deploy` — залить на VK-хостинг (нужен доступ; в обычной работе не требуется, деплой сам запускает GitHub Actions)
 
 ## Публикация
-- Приложение: https://vk.com/app54788608 (id 54788608)
-- Хостинг (prod): https://prod-app54788608-9933ded4e1a8.pages-ac.vk-apps.ru
-- dev.vk.com → «Размещение» обновляется деплоем автоматически
+- Приложение: https://vk.com/app54788608 (id 54788608) — ссылка постоянная
+- Прод-хостинг меняет адрес при каждом релизе, актуальный — в dev.vk.com или в логе деплоя
+- Пуш в `main` → автодеплой (`.github/workflows/deploy.yml`)
 
 ## Структура
-- `src/App.jsx` — всё UI (афиша, корзина, оплата, успех)
-- `src/main.jsx` — точка входа, `VKWebAppInit`
-- `supabase/schema.sql` — черновик схемы БД (для бэкендера)
-- `ROADMAP.md` — доска задач к релизу
-- `vk-hosting-config.json`, `deploy-vk.cmd` — конфигурация деплоя
+```
+src/
+  App.jsx                  оркестратор: состояние, шаги, переходы
+  data/events.js           афиша (сейчас захардкожена, потом заменим на БД)
+  lib/format.js            money, склонения, стили кнопок
+  lib/storage.js           localStorage: корзина и тема
+  lib/theme + useColorScheme.js  определение и применение темы
+  lib/vk.js                мост VK: вибрация, снакбар
+  hooks/useFlyToCart.js    анимация «улетело в корзину»
+  components/              EventCard, Catalog, CartStep, OrderStep, SuccessStep, SettingsStep, CartBar, ChipFly
+  styles.css               свои стили и анимации
+supabase/schema.sql        черновик схемы БД (для бэкендера)
+ROADMAP.md                 доска задач к релизу
+vk-hosting-config.json     конфигурация деплоя
+```
 
 ## Правила
-- `main` защищён: свои ветки → PR → мержит один человек
-- Перед коммитом: `npm run build` должен проходить без ошибок
-- Каждая задача — карточка в ROADMAP.md с полем «готово, когда…»
-- Делай мелкие коммиты с понятным описанием
+- `main` защищён: работаем в ветках, мержит один человек
+  - `git checkout -b feat/qr` → пишем → `git add .` → `git commit -m "..."` → `git push` → открываем Pull Request
+- Перед коммитом `npm run check` должен проходить
+- Задачу берём из `ROADMAP.md`, в PR пишем её номер (шаблон `.github/pull_request_template.md`)
+- Не трогаем чужие файлы без нужды — так меньше конфликтов
+- Деплой в прод делает GitHub Actions сам, вручную `npm run deploy` не зовём
 - Файлы `.ps1` с кириллицей хранить в UTF-8 с BOM
-- Не открывать консольные окна пользователя (запускать скрыто)
