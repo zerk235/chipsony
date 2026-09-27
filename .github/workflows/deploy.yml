@@ -1,4 +1,4 @@
-name: Deploy to VK
+name: Deploy production
 
 on:
   push:

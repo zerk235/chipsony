@@ -1,0 +1,29 @@
+name: Deploy dev version
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Подготовить конфиг (только тестовая версия)
+        run: |
+          node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('vk-hosting-config.json','utf8'));c.noprompt=true;c.update_prod=false;c.update_dev=true;fs.writeFileSync('vk-hosting-config.json',JSON.stringify(c,null,2));"
+
+      - name: Залить тестовую версию
+        env:
+          MINI_APPS_ACCESS_TOKEN: ${{ secrets.VK_DEPLOY_TOKEN }}
+          MINI_APPS_APP_ID: 54788608
+        run: npx vk-miniapps-deploy

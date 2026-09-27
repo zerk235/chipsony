@@ -26,7 +26,24 @@ Vite 8 + React 18 + VKUI 8 + `@vkontakte/vk-bridge`. Сборка — Vite.
 ## Публикация
 - Приложение: https://vk.com/app54788608 (id 54788608) — ссылка постоянная
 - Прод-хостинг меняет адрес при каждом релизе, актуальный — в dev.vk.com или в логе деплоя
-- Пуш в `main` → автодеплой (`.github/workflows/deploy.yml`)
+- Пуш в `dev` → автодеплой **тестовой** версии (`.github/workflows/deploy-dev.yml`)
+- Мерж в `main` → автодеплой **прода** (`.github/workflows/deploy.yml`)
+- Ручной `npm run deploy` в работе не используем
+
+## Ветки и работа вдвоём
+Схема: своя ветка → PR в `dev` → проверка → мержат в `main` → прод.
+```
+feature/qr        твоя работа
+      ↓ PR
+dev               тестовая версия, можно гонять и показывать
+      ↓ PR (когда проверено)
+main              прод
+```
+1. `git checkout -b feat/что-делаю` — своя ветка от `dev`
+2. Пишешь код, `npm run check` проходит
+3. `git add .` → `git commit -m "что сделал"` → `git push -u origin feat/что-делаю`
+4. Открываешь Pull Request в `dev` (шаблон `.github/pull_request_template.md`)
+5. В `main` мержат только проверенное
 
 ## Структура
 ```
@@ -46,10 +63,9 @@ vk-hosting-config.json     конфигурация деплоя
 ```
 
 ## Правила
-- `main` защищён: работаем в ветках, мержит один человек
-  - `git checkout -b feat/qr` → пишем → `git add .` → `git commit -m "..."` → `git push` → открываем Pull Request
+- `main` защищён: работаем в ветках от `dev`, в `main` мержат только проверенное
 - Перед коммитом `npm run check` должен проходить
 - Задачу берём из `ROADMAP.md`, в PR пишем её номер (шаблон `.github/pull_request_template.md`)
 - Не трогаем чужие файлы без нужды — так меньше конфликтов
-- Деплой в прод делает GitHub Actions сам, вручную `npm run deploy` не зовём
+- Деплой делает GitHub Actions сам, вручную `npm run deploy` не зовём
 - Файлы `.ps1` с кириллицей хранить в UTF-8 с BOM
