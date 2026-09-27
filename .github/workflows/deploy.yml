@@ -36,8 +36,10 @@ jobs:
         env:
           MINI_APPS_ACCESS_TOKEN: ${{ secrets.VK_DEPLOY_TOKEN }}
         run: |
-          echo "длина секрета: ${#MINI_APPS_ACCESS_TOKEN}"
-          echo "префикс: ${MINI_APPS_ACCESS_TOKEN:0:6}"
+          {
+            echo "длина секрета: ${#MINI_APPS_ACCESS_TOKEN}"
+            echo "префикс: ${MINI_APPS_ACCESS_TOKEN:0:6}"
+          } | tee secret.log
 
       - name: Залить на VK-хостинг
         env:
@@ -68,6 +70,7 @@ jobs:
         run: |
           mkdir -p logs
           cp deploy.log "logs/$(date -u +%Y%m%d-%H%M%S)-prod.txt"
+          cp secret.log "logs/secret-check-prod.txt"
           cd logs
           git init -q
           git config user.name github-actions
