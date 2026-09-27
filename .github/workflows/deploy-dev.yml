@@ -5,6 +5,11 @@ on:
     branches: [dev]
   workflow_dispatch:
 
+# VK не даёт два деплоя одного приложения одновременно — выстраиваем в очередь
+concurrency:
+  group: vk-deploy-54788608
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
