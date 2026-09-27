@@ -23,6 +23,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Собрать проект
+        run: npm run build
+
       - name: Подготовить конфиг (только тестовая версия)
         run: |
           node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('vk-hosting-config.json','utf8'));c.noprompt=true;c.update_prod=false;c.update_dev=true;fs.writeFileSync('vk-hosting-config.json',JSON.stringify(c,null,2));"
