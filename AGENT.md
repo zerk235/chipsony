@@ -30,6 +30,13 @@ Vite 8 + React 18 + VKUI 8 + `@vkontakte/vk-bridge`. Сборка — Vite.
 - Мерж в `main` → автодеплой **прода** (`.github/workflows/deploy.yml`)
 - Ручной `npm run deploy` в работе не используем
 
+### Если деплой в GitHub упал
+Почти всегда истёк токен доступа VK: он живёт недолго и **отзывается** при каждом новом
+`npm run deploy` на компьютере. Лечится обновлением секрета:
+`Settings → Secrets and variables → Actions → VK_DEPLOY_TOKEN`, значение — поле `access_token`
+из файла `~/.config/configstore/@vkontakte/vk-miniapps-deploy.json`.
+Текст ошибки деплоя пишется в отчёт прогона (вкладка Summary) — смотри его первым делом.
+
 ## Ветки и работа вдвоём
 Схема: своя ветка → PR в `dev` → проверка → мержат в `main` → прод.
 ```
