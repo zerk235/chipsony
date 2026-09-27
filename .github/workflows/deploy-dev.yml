@@ -7,12 +7,13 @@ on:
 
 # VK не даёт два деплоя одного приложения одновременно — выстраиваем в очередь
 concurrency:
-  group: vk-deploy-54788608
+  group: vk-deploy-54788608-v2
   cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
@@ -50,7 +51,7 @@ jobs:
           : > deploy.log
           for i in 1 2 3; do
             echo "--- попытка $i из 3 ---" >> deploy.log
-            npx vk-miniapps-deploy >> deploy.log 2>&1
+            npx vk-miniapps-deploy < /dev/null >> deploy.log 2>&1
             code=$?
             [ $code -eq 0 ] && break
             if [ $i -lt 3 ]; then
