@@ -13,6 +13,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -52,3 +54,17 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
           exit $code
+
+      - name: Сохранить лог в ветку logs
+        if: failure()
+        continue-on-error: true
+        run: |
+          mkdir -p logs
+          cp deploy.log "logs/$(date -u +%Y%m%d-%H%M%S)-prod.txt"
+          cd logs
+          git init -q
+          git config user.name github-actions
+          git config user.email actions@github.com
+          git add -A
+          git commit -q -m "deploy log ${{ github.sha }}" || true
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/logs || true
