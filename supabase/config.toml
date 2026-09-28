@@ -1,0 +1,8 @@
+# Локальная работа с Supabase: supabase start / supabase db reset
+# ВАЖНО: verify_jwt = false, потому что Supabase Auth у нас не используется.
+# Аутентификация — подпись initData от VK, её проверяет сама функция.
+
+project_id = "chipsony"
+
+[functions.me]
+verify_jwt = false

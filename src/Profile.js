@@ -1,122 +1,86 @@
-// src/profile.js
-// Модуль личного профиля пользователя (Supabase)
-import { createClient } from '@supabase/supabase-js';
+// Модуль личного профиля пользователя.
+//
+// Аутентификации в Supabase нет: пользователь опознаётся по подписанному
+// initData от VK, его проверяет Edge Function supabase/functions/me.
+// Поэтому здесь нет ни supabase.auth, ни anon-ключа — только HTTP-запросы
+// к функции с initData внутри.
+import { getInitData } from './lib/vkUser';
 
-// Клиент Supabase. В проекте, скорее всего, уже есть свой — тогда
-// импортируйте его отсюда вместо создания нового.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const BASE = (import.meta.env.VITE_PROFILE_ENDPOINT || '').trim()
+  || (import.meta.env.VITE_SUPABASE_URL
+    ? `${String(import.meta.env.VITE_SUPABASE_URL).replace(/\/+$/, '')}/functions/v1/me`
+    : '');
 
-/**
- * Возвращает текущего авторизованного пользователя или null.
- */
-export async function getCurrentUser() {
-  const { data, error } = await supabase.auth.getUser();
-  if (error) {
-    console.warn('[profile] getCurrentUser:', error.message);
-    return null;
+export function isProfileConfigured() {
+  return Boolean(BASE);
+}
+
+async function call(body) {
+  if (!BASE) {
+    throw new Error('Профиль пока не подключён: не задан VITE_SUPABASE_URL');
   }
-  return data?.user ?? null;
+
+  const initData = await getInitData();
+  if (!initData) {
+    throw new Error('Не удалось получить данные запуска от VK');
+  }
+
+  const response = await fetch(BASE, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ initData, ...body }),
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch {}
+
+  if (!response.ok) {
+    throw new Error(payload?.error || `Сервер профиля ответил ${response.status}`);
+  }
+
+  return payload?.profile ?? null;
 }
 
-/**
- * Загружает профиль из таблицы `profiles`.
- * Если записи нет — создаёт её на основе данных auth-пользователя.
- */
-export async function loadProfile() {
-  const user = await getCurrentUser();
-  if (!user) return null;
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  if (error) throw new Error(`Не удалось загрузить профиль: ${error.message}`);
-  if (data) return data;
-
-  // Профиля ещё нет — создаём
-  return createProfile(user);
+/** Загружает профиль, при первом обращении создаёт его на сервере. */
+export function loadProfile() {
+  return call({});
 }
 
-/**
- * Создаёт запись профиля для пользователя.
- */
-export async function createProfile(user) {
-  const fallbackName =
-    user.user_metadata?.full_name ||
-    user.email?.split('@')[0] ||
-    'Гость';
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .insert({
-      id: user.id,
-      display_name: fallbackName,
-      avatar_url: user.user_metadata?.avatar_url ?? null,
-      phone: null,
-      city: null,
-      updated_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (error) throw new Error(`Не удалось создать профиль: ${error.message}`);
-  return data;
+/** Сохраняет поля профиля: display_name, phone, city. */
+export function updateProfile(patch) {
+  return call({ patch });
 }
 
-/**
- * Обновляет поля профиля.
- * @param {object} patch — например { display_name, phone, city }
- */
-export async function updateProfile(patch) {
-  const user = await getCurrentUser();
-  if (!user) throw new Error('Пользователь не авторизован');
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+const EXT_BY_TYPE = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({ ...patch, updated_at: new Date().toISOString() })
-    .eq('id', user.id)
-    .select()
-    .single();
-
-  if (error) throw new Error(`Не удалось сохранить профиль: ${error.message}`);
-  return data;
+function readAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      const comma = result.indexOf(',');
+      resolve(comma === -1 ? result : result.slice(comma + 1));
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
-/**
- * Загружает аватар в бакет `avatars` и обновляет профиль.
- * @param {File} file
- */
+/** Загружает аватар и прикрепляет ссылку к профилю. */
 export async function uploadAvatar(file) {
-  const user = await getCurrentUser();
-  if (!user) throw new Error('Пользователь не авторизован');
   if (!file) throw new Error('Файл не выбран');
-  if (file.size > 2 * 1024 * 1024) throw new Error('Аватар не больше 2 МБ');
+  if (file.size > MAX_AVATAR_BYTES) throw new Error('Аватар не больше 2 МБ');
 
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
-  const path = `${user.id}/avatar.${ext}`;
+  const ext = EXT_BY_TYPE[file.type];
+  if (!ext) throw new Error('Подойдёт только JPG, PNG или WEBP');
 
-  const { error: uploadError } = await supabase.storage
-    .from('avatars')
-    .upload(path, file, { upsert: true, cacheControl: '3600' });
-
-  if (uploadError) throw new Error(`Ошибка загрузки: ${uploadError.message}`);
-
-  const { data: publicUrlData } = supabase.storage
-    .from('avatars')
-    .getPublicUrl(path);
-
-  const avatarUrl = `${publicUrlData.publicUrl}?t=${Date.now()}`;
-  await updateProfile({ avatar_url: avatarUrl });
-  return avatarUrl;
-}
-
-/**
- * Выход из аккаунта.
- */
-export async function signOut() {
-  await supabase.auth.signOut();
+  const avatarBase64 = await readAsBase64(file);
+  return call({ avatarBase64, avatarExt: ext });
 }

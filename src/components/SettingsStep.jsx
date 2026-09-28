@@ -1,4 +1,5 @@
 import { Button, Caption, Div, Group, Header, Radio, RadioGroup, Spacing } from '@vkontakte/vkui';
+import { Icon28UserOutline } from '@vkontakte/icons';
 import { plural } from '../lib/format';
 
 const THEME_OPTIONS = [
@@ -7,7 +8,7 @@ const THEME_OPTIONS = [
   { value: 'dark', label: 'Тёмная тема' },
 ];
 
-export function SettingsStep({ themePref, onTheme, cartCount, onResetCart }) {
+export function SettingsStep({ themePref, onTheme, cartCount, onOpenProfile, onResetCart }) {
   return (
     <>
       <Group header={<Header mode="secondary">Оформление</Header>}>
@@ -30,6 +31,14 @@ export function SettingsStep({ themePref, onTheme, cartCount, onResetCart }) {
           <Spacing size={12} />
           <Button size="l" mode="secondary" stretched disabled={cartCount === 0} onClick={onResetCart}>
             Очистить корзину
+          </Button>
+        </Div>
+      </Group>
+
+      <Group header={<Header mode="secondary">Аккаунт</Header>}>
+        <Div>
+          <Button size="l" mode="secondary" stretched before={<Icon28UserOutline />} onClick={onOpenProfile}>
+            Мой профиль
           </Button>
         </Div>
       </Group>
