@@ -25,6 +25,7 @@ import { CartStep } from './components/CartStep';
 import { OrderStep } from './components/OrderStep';
 import { SuccessStep } from './components/SuccessStep';
 import { SettingsStep } from './components/SettingsStep';
+import { ProfileStep } from './components/ProfileStep';
 import { CartBar } from './components/CartBar';
 import { ChipFly } from './components/ChipFly';
 
@@ -103,6 +104,7 @@ export function App() {
   const goCatalog = () => { setStep('catalog'); setPrev('catalog'); setSnackbar(null); };
   const goCart = () => { setPrev('catalog'); setStep('cart'); };
   const goSettings = () => { setPrev(step); setStep('settings'); };
+  const goProfile = () => { setPrev(step); setStep('profile'); };
   const goBack = () => setStep(prev);
 
   const goOrder = (count, total) => {
@@ -129,7 +131,7 @@ export function App() {
   };
 
   const showCartBar = step === 'catalog';
-  const showBack = step === 'cart' || step === 'order' || step === 'settings';
+  const showBack = step === 'cart' || step === 'order' || step === 'settings' || step === 'profile';
   const noticeBg = theme === 'dark' ? '#3A2E12' : '#FFF4D6';
   const noticeFg = theme === 'dark' ? '#FFD479' : '#7A5B00';
 
@@ -219,6 +221,7 @@ export function App() {
                     themePref={themePref}
                     onTheme={setThemePref}
                     cartCount={cartCount}
+                    onOpenProfile={goProfile}
                     onResetCart={() => {
                       clearCart();
                       setSnackbar(
@@ -229,6 +232,8 @@ export function App() {
                     }}
                   />
                 )}
+
+                {step === 'profile' && <ProfileStep />}
               </Div>
 
               <ChipFly fly={fly} />

@@ -27,6 +27,8 @@ jobs:
       - run: npm ci
 
       - name: Собрать проект
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
         run: npm run build
 
       - name: Подготовить конфиг без вопросов

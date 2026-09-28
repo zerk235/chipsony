@@ -76,3 +76,10 @@ vk-hosting-config.json     конфигурация деплоя
 - Не трогаем чужие файлы без нужды — так меньше конфликтов
 - Деплой делает GitHub Actions сам, вручную `npm run deploy` не зовём
 - Файлы `.ps1` с кириллицей хранить в UTF-8 с BOM
+
+## Аутентификация и профиль
+- Supabase Auth не используем. Пользователя опознаём по подписанному `initData` от VK.
+- Проверка подписи и работа с профилем — в Edge Function `supabase/functions/me/index.ts`.
+- В клиенте нет ни anon-, ни service-ключа: только `VITE_SUPABASE_URL` в `.env`.
+- Таблицы `profiles` и `registrations` закрыты от anon-ключа, доступ даёт только функция.
+- Подробности развёртывания и список ручных шагов — в `supabase/README.md`.

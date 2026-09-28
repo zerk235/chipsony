@@ -91,7 +91,7 @@
 .profile__status[data-kind="success"] { color: #16a34a; }
 .profile__status[data-kind="error"]   { color: #dc2626; }
 
-/* Тёмная тема */
+/* Тёмная тема: и по системе, и по переключателю в настройках приложения */
 @media (prefers-color-scheme: dark) {
   .profile {
     --text: #f5f5f5;
@@ -100,4 +100,12 @@
     --surface-2: #2a2a30;
     --border: #3a3a42;
   }
+}
+
+html[data-chipsony-theme='dark'] .profile {
+  --text: #f5f5f5;
+  --text-muted: #a1a1aa;
+  --surface: #1f1f23;
+  --surface-2: #2a2a30;
+  --border: #3a3a42;
 }
