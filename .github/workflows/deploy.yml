@@ -31,7 +31,7 @@ jobs:
 
       - name: Подготовить конфиг без вопросов
         run: |
-          node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('vk-hosting-config.json','utf8'));c.noprompt=true;c.update_prod=true;c.update_dev=true;fs.writeFileSync('vk-hosting-config.json',JSON.stringify(c,null,2));"
+          node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('vk-hosting-config.json','utf8'));c.noprompt=true;c.update_prod=true;c.update_dev=false;fs.writeFileSync('vk-hosting-config.json',JSON.stringify(c,null,2));"
 
       - name: Проверить секрет
         env:
@@ -49,14 +49,14 @@ jobs:
         run: |
           set +e
           : > deploy.log
-          for i in 1 2 3; do
-            echo "--- попытка $i из 3 ---" >> deploy.log
-            npx vk-miniapps-deploy < /dev/null >> deploy.log 2>&1
+          for i in 1 2 3 4; do
+            echo "--- попытка $i из 4 ---" >> deploy.log
+            timeout 150 npx vk-miniapps-deploy < /dev/null >> deploy.log 2>&1
             code=$?
             [ $code -eq 0 ] && break
-            if [ $i -lt 3 ]; then
-              echo "не удалось, повтор через 30 сек" >> deploy.log
-              sleep 30
+            if [ $i -lt 4 ]; then
+              echo "не удалось (код $code), повтор через 20 сек" >> deploy.log
+              sleep 20
             fi
           done
           cat deploy.log
