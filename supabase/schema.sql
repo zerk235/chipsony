@@ -10,6 +10,7 @@ create table if not exists public.events (
   place text not null,
   date text not null,
   price int not null default 0,
+  seats int not null default 100 check (seats >= 0),
   emoji text not null default '🍿',
   gradient text not null default '',
   status text not null default 'published',
@@ -18,8 +19,29 @@ create table if not exists public.events (
 
 alter table public.events enable row level security;
 
+-- Для баз, где таблица уже создана без этой колонки.
+alter table public.events add column if not exists seats int not null default 100 check (seats >= 0);
+
+-- Афиша публичная: любому читателю отдаются опубликованные события.
 drop policy if exists events_read on public.events;
-create policy events_read on public.events for select using (true);
+create policy events_read on public.events for select using (status = 'published');
+
+-- Стартовые события для каталога (id совпадают с прошлыми прототипными).
+insert into public.events (id, title, place, date, price, seats, emoji, gradient)
+values
+  ('hack', 'Хакатон MAX — финал', 'VK, Москва', '28 сентября, 17:00', 490, 150, '🍿', 'linear-gradient(120deg,#FFB800 0%,#FF6B00 55%,#2C2C2C 55%)'),
+  ('picket', 'Пикет «Чипсоны в городе»', 'Арбат, сцена', '29 сентября, 19:00', 790, 60, '🥁', 'linear-gradient(120deg,#8B9BFF 0%,#5B5BFF 55%,#1F1F2E 55%)'),
+  ('night', 'Ночная экскурсия по офису VK', 'Ленинградский проспект 39', '2 октября, 23:00', 990, 40, '🌙', 'linear-gradient(120deg,#3EAAFF 0%,#234B9B 55%,#101426 55%)'),
+  ('workshop', 'Воркшоп «Креатив в 2 часа ночи»', 'Онлайн', '4 октября, 00:00', 0, 500, '💡', 'linear-gradient(120deg,#7BE495 0%,#2FA85C 55%,#0F2E1C 55%)')
+on conflict (id) do update set
+  title = excluded.title,
+  place = excluded.place,
+  date = excluded.date,
+  price = excluded.price,
+  seats = excluded.seats,
+  emoji = excluded.emoji,
+  gradient = excluded.gradient,
+  status = 'published';
 
 -- -------------------------------------------------------------- profiles
 -- Ключ — vk_user_id из initData. Уникальный, чтобы у пользователя
@@ -59,6 +81,48 @@ drop policy if exists registrations_insert_own on public.registrations;
 
 create index if not exists registrations_vk_user_idx on public.registrations (vk_user_id);
 create index if not exists registrations_event_idx on public.registrations (event_id);
+
+-- ---------------------------------------------------- oversell (защита)
+-- Финальный щит от перепродажи на уровне базы: сумма мест по всем
+-- регистрациям события не должна превысить events.seats. Триггер даёт
+-- ОДНУ гарантию даже при гонке двух одновременных запросов (операция
+-- атомарна). Сообщение начинается с OVERSOLD — его ловит функция register.
+create or replace function public.check_registration_seats()
+returns trigger
+language plpgsql
+as $$
+declare
+  _seats int;
+  _taken int;
+  _room int;
+begin
+  if tg_op = 'UPDATE' and new.event_id = old.event_id and new.seats = old.seats then
+    return new;
+  end if;
+
+  select seats into _seats from public.events where id = new.event_id;
+  if _seats is null then
+    raise exception 'нет события %', new.event_id;
+  end if;
+
+  select coalesce(sum(seats), 0) into _taken
+  from public.registrations
+  where event_id = new.event_id
+    and id is distinct from new.id;
+
+  _room := _seats - _taken;
+  if new.seats > _room then
+    raise exception 'OVERSOLD: событие %, запрошено %, свободно %', new.event_id, new.seats, _room;
+  end if;
+
+  return new;
+end
+$$;
+
+drop trigger if exists registrations_check_seats on public.registrations;
+create trigger registrations_check_seats
+  before insert or update of seats, event_id on public.registrations
+  for each row execute function public.check_registration_seats();
 
 -- -------------------------------------------------------------- storage
 -- Публичный бакет для аватаров: файлы и так несекретные, а ссылку
