@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.tickets]
 verify_jwt = false
+
+[functions.scan]
+verify_jwt = false
