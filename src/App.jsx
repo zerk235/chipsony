@@ -23,6 +23,7 @@ import { Catalog } from './components/Catalog';
 import { CartStep } from './components/CartStep';
 import { OrderStep } from './components/OrderStep';
 import { SuccessStep } from './components/SuccessStep';
+import { EventStep } from './components/EventStep';
 import { SettingsStep } from './components/SettingsStep';
 import { ProfileStep } from './components/ProfileStep';
 import { MyTickets } from './components/MyTickets';
@@ -44,6 +45,12 @@ export function App() {
   const [result, setResult] = useState({ tickets: [] });
   const [snackbar, setSnackbar] = useState(null);
   const [online, setOnline] = useState(() => navigator.onLine !== false);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventFetchFailed, setEventFetchFailed] = useState(false);
+  const [myTickets, setMyTickets] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+
+  const registeredIds = new Set(myTickets.map((t) => t.events?.id || t.event_id));
 
   const cartBtnRef = useRef(null);
   const { fly, ring, bumpKey, pulse, flyFrom } = useFlyToCart(cartBtnRef);
@@ -52,22 +59,36 @@ export function App() {
     saveCart(cart);
   }, [cart]);
 
+  const refreshEvents = async () => {
+    setEventsLoading(true);
+    setEventFetchFailed(false);
+    try {
+      const payload = await request('events');
+      if (Array.isArray(payload.events) && payload.events.length) {
+        setEvents(payload.events);
+        saveEvents(payload.events);
+      }
+    } catch (err) {
+      setEventFetchFailed(true);
+      console.warn('[chipsony] афиша не загрузилась, показываем кэш:', err);
+    } finally {
+      setEventsLoading(false);
+    }
+  };
+
+  const refreshTickets = async () => {
+    try {
+      const res = await request('tickets');
+      setMyTickets(res.tickets ?? []);
+    } catch (err) {
+      console.warn('[chipsony] билеты не загрузились:', err);
+    }
+  };
+
   useEffect(() => {
-    let ignore = false;
-    request('events')
-      .then((payload) => {
-        if (ignore) return;
-        if (Array.isArray(payload.events) && payload.events.length) {
-          setEvents(payload.events);
-          saveEvents(payload.events);
-        }
-      })
-      .catch((err) => {
-        console.warn('[chipsony] афиша не загрузилась, показываем кэш:', err);
-      });
-    return () => {
-      ignore = true;
-    };
+    refreshEvents();
+    refreshTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -141,6 +162,7 @@ export function App() {
     setResult({ tickets });
     clearCart();
     setStep('success');
+    refreshTickets();
     setSnackbar(
       <Snackbar onClose={() => setSnackbar(null)} duration={2500}>
         Заказ {totalCount} билетов оформлен
@@ -150,12 +172,18 @@ export function App() {
   };
 
   const retry = () => {
-    setEvents(loadEvents());
     setOnline(navigator.onLine !== false);
+    refreshEvents();
+  };
+
+  const goEvent = (id) => {
+    setPrev(step);
+    setSelectedEventId(id);
+    setStep('event');
   };
 
   const showCartBar = step === 'catalog';
-  const showBack = step === 'cart' || step === 'order' || step === 'settings' || step === 'profile' || step === 'tickets' || step === 'scan';
+  const showBack = step === 'cart' || step === 'order' || step === 'settings' || step === 'profile' || step === 'tickets' || step === 'scan' || step === 'event';
   const noticeBg = theme === 'dark' ? '#3A2E12' : '#FFF4D6';
   const noticeFg = theme === 'dark' ? '#FFD479' : '#7A5B00';
 
@@ -200,7 +228,33 @@ export function App() {
 
               <Div style={showCartBar ? { paddingBottom: 104 } : undefined}>
                 {step === 'catalog' && (
-                  <Catalog events={events} cart={cart} platform={platform} onAdd={add} onInc={inc} onDec={dec} />
+                  <Catalog
+                    events={events}
+                    cart={cart}
+                    platform={platform}
+                    registeredIds={registeredIds}
+                    loading={eventsLoading}
+                    refreshFailed={eventFetchFailed}
+                    onAdd={add}
+                    onInc={inc}
+                    onDec={dec}
+                    onOpen={goEvent}
+                    onRefresh={refreshEvents}
+                  />
+                )}
+
+                {step === 'event' && (
+                  <EventStep
+                    event={events.find((e) => e.id === selectedEventId)}
+                    count={cart[selectedEventId] || 0}
+                    isGoing={registeredIds.has(selectedEventId)}
+                    platform={platform}
+                    onAdd={add}
+                    onInc={inc}
+                    onDec={dec}
+                    onGoCart={goCart}
+                    onOpenTickets={goTickets}
+                  />
                 )}
 
                 {step === 'cart' && (

@@ -92,6 +92,62 @@ html[data-chipsony-theme='light'] body {
   animation: cartBump 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Скелетоны загрузки */
+.chip-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--vkui--color_background_secondary, rgba(0, 0, 0, 0.06));
+}
+
+.chip-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--vkui--color_background, #fff), transparent);
+  animation: chipSkeletonShine 1.3s ease-in-out infinite;
+}
+
+@keyframes chipSkeletonShine {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.chip-skeleton--hero {
+  height: 120px;
+  border-radius: 14px 14px 0 0;
+}
+
+.chip-skeleton--title {
+  height: 18px;
+  width: 70%;
+}
+
+.chip-skeleton--meta {
+  height: 13px;
+  width: 50%;
+}
+
+.chip-skeleton--line {
+  height: 13px;
+  width: 100%;
+}
+
+.chip-skeleton--button {
+  height: 44px;
+  width: 120px;
+  border-radius: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip-skeleton::after {
+    animation: none;
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chip-fly,
   .cart-ring {

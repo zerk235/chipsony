@@ -13,14 +13,20 @@ create table if not exists public.events (
   seats int not null default 100 check (seats >= 0),
   emoji text not null default '🍿',
   gradient text not null default '',
+  description text not null default '',
+  bring text not null default '',
+  how_to_get text not null default '',
   status text not null default 'published',
   created_at timestamptz not null default now()
 );
 
 alter table public.events enable row level security;
 
--- Для баз, где таблица уже создана без этой колонки.
+-- Для баз, где таблица уже создана без этих колонок.
 alter table public.events add column if not exists seats int not null default 100 check (seats >= 0);
+alter table public.events add column if not exists description text not null default '';
+alter table public.events add column if not exists bring text not null default '';
+alter table public.events add column if not exists how_to_get text not null default '';
 
 -- Афиша публичная: любому читателю отдаются опубликованные события.
 drop policy if exists events_read on public.events;
@@ -28,14 +34,14 @@ create policy events_read on public.events for select using (status = 'published
 
 -- Стартовые события для каталога (id совпадают с прошлыми прототипными,
 -- чтобы ранние регистрации остались валидными).
-insert into public.events (id, title, place, date, price, seats, emoji, gradient)
+insert into public.events (id, title, place, date, price, seats, emoji, gradient, description, bring, how_to_get)
 values
-  ('hack', 'Хакатон MAX 2026 — финал', 'VK, Ходынский бульвар 17А', '10 октября, 09:00', 0, 300, '🍿', 'linear-gradient(120deg,#FFB800 0%,#FF6B00 55%,#2C2C2C 55%)'),
-  ('picket', 'Фест «Чипсоны»: музыка и стендап', 'Парк Горького, летняя сцена', '18 октября, 14:00', 990, 500, '🎤', 'linear-gradient(120deg,#8B9BFF 0%,#5B5BFF 55%,#1F1F2E 55%)'),
-  ('workshop', 'Воркшоп «Собираем прототип за вечер»', 'VK, коворкинг, 5 этаж', '24 октября, 18:00', 0, 40, '💡', 'linear-gradient(120deg,#7BE495 0%,#2FA85C 55%,#0F2E1C 55%)'),
-  ('night', 'Ночная экскурсия по офису VK', 'Ленинградский проспект, 39', '30 октября, 23:00', 790, 30, '🌙', 'linear-gradient(120deg,#3EAAFF 0%,#234B9B 55%,#101426 55%)'),
-  ('demo', 'Демо-день: что построили команды', 'VK, конференц-зал', '7 ноября, 12:00', 0, 150, '🚀', 'linear-gradient(120deg,#F2709C 0%,#FF9472 50%,#11122E 50%)'),
-  ('meetup', 'Митап «VK Mini Apps» для разработчиков', 'VK, амфитеатр', '14 ноября, 19:00', 0, 200, '⚡', 'linear-gradient(120deg,#9B7BFF 0%,#5B3BFF 55%,#171227 55%)')
+  ('hack', 'Хакатон MAX 2026 — финал', 'VK, Ходынский бульвар 17А', '10 октября, 09:00', 0, 300, '🍿', 'linear-gradient(120deg,#FFB800 0%,#FF6B00 55%,#2C2C2C 55%)', 'Два дня кода, сон на подушках и финал на большой сцене: команды защищают прототипы перед жюри VK. Все участники получают мерч и доступ в закрытый чат с менторами.', 'ноутбук, зарядка, паспорт', 'Метро «Белорусская», пешком 7 минут. Вход по билету на регистрации с 08:30.'),
+  ('picket', 'Фест «Чипсоны»: музыка и стендап', 'Парк Горького, летняя сцена', '18 октября, 14:00', 990, 500, '🎤', 'linear-gradient(120deg,#8B9BFF 0%,#5B5BFF 55%,#1F1F2E 55%)', 'Фестиваль уличной музыки и стендапа в Парке Горького: живой звук, локальные артисты и много-много чипсонов.', 'плед, друзья', 'Метро «Октябрьская», главный вход парка, летняя сцена у пруда.'),
+  ('workshop', 'Воркшоп «Собираем прототип за вечер»', 'VK, коворкинг, 5 этаж', '24 октября, 18:00', 0, 40, '💡', 'linear-gradient(120deg,#7BE495 0%,#2FA85C 55%,#0F2E1C 55%)', 'За один вечер соберёте рабочий прототип Mini App: от идеи до запуска во VK. Разборы, шаблоны и опытные менторы рядом.', 'ноутбук с зарядкой', 'VK, коворкинг 5 этаж: пропуск по билету у стойки рецепции.'),
+  ('night', 'Ночная экскурсия по офису VK', 'Ленинградский проспект, 39', '30 октября, 23:00', 790, 30, '🌙', 'linear-gradient(120deg,#3EAAFF 0%,#234B9B 55%,#101426 55%)', 'Когда офис пустеет — начинается магия: светящиеся локации, выход на смотровую и истории ВКонтакте из первых уст.', 'удобная обувь', 'Ленинградский проспект 39, корпус А: сбор в 22:40 у главного входа.'),
+  ('demo', 'Демо-день: что построили команды', 'VK, конференц-зал', '7 ноября, 12:00', 0, 150, '🚀', 'linear-gradient(120deg,#F2709C 0%,#FF9472 50%,#11122E 50%)', 'Презентации команд после двух месяцев разработки: о чём мечтают, что собрали и как сэкономят время пользователям. Голосование зрителей влияет на приз.', 'телефон для голосования', 'VK, конференц-зал 4 этаж. Вход по билету, регистрация с 11:30.'),
+  ('meetup', 'Митап «VK Mini Apps» для разработчиков', 'VK, амфитеатр', '14 ноября, 19:00', 0, 200, '⚡', 'linear-gradient(120deg,#9B7BFF 0%,#5B3BFF 55%,#171227 55%)', 'Для разработчиков и дизайнеров: лайфхаки платформы, разбор реальных кейсов из каталога и open Q&A с техлидами.', 'только ваш аккаунт VK', 'VK, амфитеатр 1 этаж. Онлайн-трансляция по ссылке в чате события.')
 on conflict (id) do update set
   title = excluded.title,
   place = excluded.place,
@@ -44,6 +50,9 @@ on conflict (id) do update set
   seats = excluded.seats,
   emoji = excluded.emoji,
   gradient = excluded.gradient,
+  description = excluded.description,
+  bring = excluded.bring,
+  how_to_get = excluded.how_to_get,
   status = 'published';
 
 -- -------------------------------------------------------------- profiles
