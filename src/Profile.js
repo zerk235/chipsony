@@ -22,7 +22,9 @@ async function call(body) {
 
   const initData = await getInitData();
   if (!initData) {
-    throw new Error(`Не удалось получить данные запуска от VK (${initDataDiagnostics()})`);
+    const diag = await initDataDiagnostics();
+    console.error('[chipsony] initData не найден:', diag);
+    throw new Error(`Не удалось получить данные запуска от VK (${diag})`);
   }
 
   const response = await fetch(BASE, {

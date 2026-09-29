@@ -48,16 +48,27 @@ export async function getInitData() {
 }
 
 /**
- * Короткая сводка для диагностики, если initData нет.
- * Возвращается в тексте ошибки экрана, чтобы сразу было видно, где искать.
+ * Развёрнутая диагностика, если initData не нашёлся заказным способом.
+ * Позволяет по одному сообщению понять, что именно VK положил в URL.
  */
-export function initDataDiagnostics() {
+export async function initDataDiagnostics() {
+  const parts = [];
+  parts.push(`url=${window.location.href}`);
   const searchQ = new URLSearchParams(window.location.search);
-  const hashQ = window.location.hash ? new URLSearchParams(window.location.hash.replace(/^[#\\/]*/, '')) : null;
-  return (
-    `query: «${window.location.search ? searchQ.get('initData') ? 'есть' : 'нет' : 'пусто'}», ` +
-    `hash: «${window.location.hash ? hashQ?.get('initData') ? 'есть' : 'нет' : 'пусто'}»`
-  );
+  parts.push(`searchKeys=${[...searchQ.keys()].join(',') || '(пусто)'}`);
+  parts.push(`hash=${window.location.hash || '(пусто)'}`);
+  let bridgeInfo = 'мост не вызывался';
+  try {
+    const response = await bridge.send('VKWebAppGetLaunchParams', undefined, 1500);
+    const lp = response?.launchParams;
+    bridgeInfo = lp
+      ? `lpKeys=${Object.keys(lp).join(',')}`
+      : `ответ без launchParams (${JSON.stringify(response).slice(0, 140)})`;
+  } catch (e) {
+    bridgeInfo = `ошибка моста: ${(e && e.message) || e}`;
+  }
+  parts.push(bridgeInfo);
+  return parts.join(' | ');
 }
 
 export function resetInitDataCache() {
