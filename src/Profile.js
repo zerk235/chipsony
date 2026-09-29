@@ -20,7 +20,8 @@ async function probeReachability() {
   const parts = [];
   const probe = async (url, label) => {
     try {
-      await fetch(url, { method: 'HEAD', mode: 'no-cors', cache: 'no-store' });
+      // Тот же «простой» POST, что и в call() — точная симуляция пути к серверу.
+      await fetch(url, { method: 'POST', mode: 'no-cors', body: '{}', cache: 'no-store' });
       parts.push(`${label}:доступен`);
     } catch {
       parts.push(`${label}:недоступен`);
@@ -47,9 +48,11 @@ async function call(body) {
 
   let response;
   try {
+    // Без заголовка content-type запрос становится «простым» и не требует
+    // preflight OPTIONS, который в iframe VK нестабилен. Edge Function парсит
+    // JSON из тела не глядя на заголовок.
     response = await fetch(BASE, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ launchQuery, userInfo, ...body }),
     });
   } catch (err) {
