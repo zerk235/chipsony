@@ -1,0 +1,21 @@
+--- попытка 1 из 4 ---
+Uploaded version 1790707874!
+Deploy success...
+Please, confirm deploy on your phone.
+не удалось (код 124), повтор через 20 сек
+--- попытка 2 из 4 ---
+Uploaded version 1790708043!
+Deploy success...
+Please, confirm deploy on your phone.
+не удалось (код 124), повтор через 20 сек
+--- попытка 3 из 4 ---
+Uploaded version 1790708213!
+Deploy success...
+Please, confirm deploy on your phone.
+Deploy success...
+Please, confirm deploy on your phone.
+не удалось (код 124), повтор через 20 сек
+--- попытка 4 из 4 ---
+Uploaded version 1790708383!
+Deploy success...
+Please, confirm deploy on your phone.
