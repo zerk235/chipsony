@@ -26,14 +26,16 @@ alter table public.events add column if not exists seats int not null default 10
 drop policy if exists events_read on public.events;
 create policy events_read on public.events for select using (status = 'published');
 
--- Стартовые события для каталога (id совпадают с прошлыми прототипными).
+-- Стартовые события для каталога (id совпадают с прошлыми прототипными,
+-- чтобы ранние регистрации остались валидными).
 insert into public.events (id, title, place, date, price, seats, emoji, gradient)
 values
-  ('hack', 'Хакатон MAX 2026 — питчинг команд', 'VK, Москва', '11 октября, 10:00', 490, 150, '🍿', 'linear-gradient(120deg,#FFB800 0%,#FF6B00 55%,#2C2C2C 55%)'),
-  ('picket', 'Пикет «Чипсоны в городе»', 'Арбат, сцена', '17 октября, 19:00', 790, 60, '🥁', 'linear-gradient(120deg,#8B9BFF 0%,#5B5BFF 55%,#1F1F2E 55%)'),
-  ('night', 'Ночная экскурсия по офису VK', 'Ленинградский проспект 39', '23 октября, 23:00', 990, 40, '🌙', 'linear-gradient(120deg,#3EAAFF 0%,#234B9B 55%,#101426 55%)'),
-  ('workshop', 'Воркшоп «Креатив в 2 часа ночи»', 'Онлайн', '25 октября, 00:00', 0, 500, '💡', 'linear-gradient(120deg,#7BE495 0%,#2FA85C 55%,#0F2E1C 55%)'),
-  ('demo', 'Демо-день: презентации команд', 'VK, конференц-зал', '1 ноября, 12:00', 0, 120, '🚀', 'linear-gradient(120deg,#F2709C 0%,#FF9472 50%,#11122E 50%)')
+  ('hack', 'Хакатон MAX 2026 — финал', 'VK, Ходынский бульвар 17А', '10 октября, 09:00', 0, 300, '🍿', 'linear-gradient(120deg,#FFB800 0%,#FF6B00 55%,#2C2C2C 55%)'),
+  ('picket', 'Фест «Чипсоны»: музыка и стендап', 'Парк Горького, летняя сцена', '18 октября, 14:00', 990, 500, '🎤', 'linear-gradient(120deg,#8B9BFF 0%,#5B5BFF 55%,#1F1F2E 55%)'),
+  ('workshop', 'Воркшоп «Собираем прототип за вечер»', 'VK, коворкинг, 5 этаж', '24 октября, 18:00', 0, 40, '💡', 'linear-gradient(120deg,#7BE495 0%,#2FA85C 55%,#0F2E1C 55%)'),
+  ('night', 'Ночная экскурсия по офису VK', 'Ленинградский проспект, 39', '30 октября, 23:00', 790, 30, '🌙', 'linear-gradient(120deg,#3EAAFF 0%,#234B9B 55%,#101426 55%)'),
+  ('demo', 'Демо-день: что построили команды', 'VK, конференц-зал', '7 ноября, 12:00', 0, 150, '🚀', 'linear-gradient(120deg,#F2709C 0%,#FF9472 50%,#11122E 50%)'),
+  ('meetup', 'Митап «VK Mini Apps» для разработчиков', 'VK, амфитеатр', '14 ноября, 19:00', 0, 200, '⚡', 'linear-gradient(120deg,#9B7BFF 0%,#5B3BFF 55%,#171227 55%)')
 on conflict (id) do update set
   title = excluded.title,
   place = excluded.place,
