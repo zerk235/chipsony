@@ -4,5 +4,16 @@
 
 project_id = "chipsony"
 
+# JWT-проверку не включаем: Supabase Auth не используется,
+# аутентификация — подпись sign/initData от VK (проверяет сама функция).
 [functions.me]
+verify_jwt = false
+
+[functions.events]
+verify_jwt = false
+
+[functions.register]
+verify_jwt = false
+
+[functions.tickets]
 verify_jwt = false
