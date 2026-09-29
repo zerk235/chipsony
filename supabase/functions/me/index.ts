@@ -1,14 +1,23 @@
-// Проверка подписи initData по алгоритму VK:
-//   secret = md5(vk_id + vk_secret)
-//   hash   = hmac_sha256(initData без параметра hash, secret)
+// Аутентификация пользователя VK Mini Apps.
+//
+// Современный формат: VK кладёт в URL параметры запуска (vk_* и vk_user_id)
+// и подпись sign. sign = base64url(hmac_sha256(secret, message)), где
+//   message = отсортированные по алфавиту пары «ключ=значение» из query
+//             (все параметры, кроме sign, в исходном URL-кодировании);
+//   secret  = «Защитный ключ» приложения (VK_MINI_APP_SECRET).
+//
+// Legacy-формат initData (для старых контекстов) тоже поддерживается:
+//   secret = md5(vk_id + vk_secret), hash = hmac_sha256(initData без hash).
 //
 // Возвращает профиль пользователя, при первом обращении создаёт его.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.10';
-import { createHash, createHmac } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 const VK_ID = Deno.env.get('VK_MINI_APP_ID') ?? '';
 const VK_SECRET = Deno.env.get('VK_MINI_APP_SECRET') ?? '';
+// Защита от повторов: параметры запуска считаем валидными неделю.
+const SIGN_MAX_AGE_SEC = 7 * 24 * 3600;
 
 const db = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
@@ -36,6 +45,44 @@ function bad(message, status = 400) {
 
 function hmacHex(secret, message) {
   return createHmac('sha256', secret).update(message, 'utf8').digest('hex');
+}
+
+// base64url без «=»: ровно такой формат у sign в параметрах запуска VK.
+function base64url(bytes) {
+  return bytes.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function safeEqual(a, b) {
+  const aa = Buffer.from(a);
+  const bb = Buffer.from(b);
+  return aa.length === bb.length && timingSafeEqual(aa, bb);
+}
+
+/** Проверка подписи sign по параметрам запуска. */
+function verifySign(launchQuery) {
+  if (!launchQuery) return { ok: false, reason: 'нет параметров запуска' };
+  if (!VK_ID || !VK_SECRET) return { ok: false, reason: 'не заданы VK_MINI_APP_ID / VK_MINI_APP_SECRET' };
+
+  const params = new URLSearchParams(launchQuery);
+  const signValue = params.get('sign');
+  if (!signValue) return { ok: false, reason: 'нет параметра sign' };
+
+  // Подпись считается по исходной строке query без параметра sign,
+  // с сортировкой всех пар в алфавитном порядке.
+  const pairs = launchQuery.split('&').filter(Boolean);
+  const message = pairs.filter((p) => !/^sign=/i.test(p)).sort().join('&');
+  const expected = base64url(createHmac('sha256', VK_SECRET).update(message, 'utf8').digest());
+  if (!safeEqual(expected, signValue)) return { ok: false, reason: 'подпись не совпала' };
+
+  const vkUserId = params.get('vk_user_id');
+  if (!vkUserId) return { ok: false, reason: 'нет vk_user_id' };
+
+  const ts = Number(params.get('vk_ts') || 0);
+  if (ts && Math.abs(Date.now() / 1000 - ts) > SIGN_MAX_AGE_SEC) {
+    return { ok: false, reason: 'устаревшие параметры запуска' };
+  }
+
+  return { ok: true, vkUserId: String(vkUserId), user: null, params };
 }
 
 // Ключ подписи initData по алгоритму VK: md5 от «id приложения + секрет».
@@ -68,12 +115,11 @@ function avatar(user, params) {
   return user?.photo_200 || params.get('photo_200') || null;
 }
 
-function verify(initData) {
+/** Проверка старого формата initData. */
+function verifyInitData(initData) {
   if (!initData) return { ok: false, reason: 'нет initData' };
   if (!VK_ID || !VK_SECRET) return { ok: false, reason: 'не заданы VK_MINI_APP_ID / VK_MINI_APP_SECRET' };
 
-  // Подпись считается по исходной строке запроса без параметра hash,
-  // поэтому режем строку, а не пересобираем через URLSearchParams.
   const cut = initData.indexOf('&hash=');
   const dataCheckString = cut === -1 ? initData : initData.slice(0, cut);
   const hash = new URLSearchParams(cut === -1 ? initData : initData.slice(cut + 1)).get('hash');
@@ -117,10 +163,14 @@ Deno.serve(async (req) => {
     return bad('тело запроса не JSON');
   }
 
-  const check = verify(String(payload.initData ?? ''));
+  // Поддерживаем и новые параметры запуска (sign), и старый initData.
+  const check = payload.launchQuery
+    ? verifySign(String(payload.launchQuery))
+    : verifyInitData(String(payload.initData ?? ''));
   if (!check.ok) return bad(check.reason, 401);
 
   const { vkUserId, user, params } = check;
+  const ui = payload.userInfo && typeof payload.userInfo === 'object' ? payload.userInfo : {};
   const now = new Date().toISOString();
 
   const patch = {};
@@ -137,14 +187,15 @@ Deno.serve(async (req) => {
   if (readError) return bad(`не удалось прочитать профиль: ${readError.message}`, 500);
 
   if (!profile) {
-    const first = firstName(user, params);
-    const last = lastName(user, params);
+    const first = firstName(user, params) || ui.first_name || '';
+    const last = lastName(user, params) || ui.last_name || '';
+    const photo = avatar(user, params) || ui.photo_200 || null;
     const { data: created, error: createError } = await db
       .from('profiles')
       .insert({
         vk_user_id: vkUserId,
         display_name: [first, last].filter(Boolean).join(' ') || 'Гость',
-        avatar_url: avatar(user, params),
+        avatar_url: photo,
         vk_first_name: first || null,
         vk_last_name: last || null,
         created_at: now,
