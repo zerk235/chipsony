@@ -12,7 +12,7 @@
 // Возвращает профиль пользователя, при первом обращении создаёт его.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.10';
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 
 const VK_ID = Deno.env.get('VK_MINI_APP_ID') ?? '';
 const VK_SECRET = Deno.env.get('VK_MINI_APP_SECRET') ?? '';
@@ -48,14 +48,18 @@ function hmacHex(secret, message) {
 }
 
 // base64url без «=»: ровно такой формат у sign в параметрах запуска VK.
+// Не используем Buffer — в Deno Edge Runtime глобального Buffer нет.
 function base64url(bytes) {
-  return bytes.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 function safeEqual(a, b) {
-  const aa = Buffer.from(a);
-  const bb = Buffer.from(b);
-  return aa.length === bb.length && timingSafeEqual(aa, bb);
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }
 
 /** Проверка подписи sign по параметрам запуска. */
