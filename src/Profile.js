@@ -15,6 +15,22 @@ export function isProfileConfigured() {
   return Boolean(BASE);
 }
 
+/** Понимает на сетевом уровне: интернет в порядке, а supabase.co — нет. */
+async function probeReachability() {
+  const parts = [];
+  const probe = async (url, label) => {
+    try {
+      await fetch(url, { method: 'HEAD', mode: 'no-cors', cache: 'no-store' });
+      parts.push(`${label}:доступен`);
+    } catch {
+      parts.push(`${label}:недоступен`);
+    }
+  };
+  await Promise.all([probe(BASE, 'supabase.co'), probe('https://vk.com/', 'vk')]);
+  const internet = parts.find((p) => p.startsWith('vk:'))?.includes('доступен');
+  return `Проверка сети: ${parts.join(', ')}${internet ? '' : ' (похоже, нет сети вообще)'}.`;
+}
+
 async function call(body) {
   if (!BASE) {
     throw new Error('Профиль пока не подключён: не задан VITE_SUPABASE_URL');
@@ -29,11 +45,18 @@ async function call(body) {
 
   const userInfo = await getVkUserInfo();
 
-  const response = await fetch(BASE, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ launchQuery, userInfo, ...body }),
-  });
+  let response;
+  try {
+    response = await fetch(BASE, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ launchQuery, userInfo, ...body }),
+    });
+  } catch (err) {
+    console.error('[chipsony] fetch не смог достучаться до функции:', err);
+    const probe = await probeReachability();
+    throw new Error(`Сервер профиля недоступен (${new URL(BASE).host}). ${probe}`);
+  }
 
   let payload = null;
   try {
