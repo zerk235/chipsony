@@ -26,6 +26,7 @@ import { SuccessStep } from './components/SuccessStep';
 import { SettingsStep } from './components/SettingsStep';
 import { ProfileStep } from './components/ProfileStep';
 import { MyTickets } from './components/MyTickets';
+import { ScanStep } from './components/ScanStep';
 import { CartBar } from './components/CartBar';
 import { ChipFly } from './components/ChipFly';
 import { loadEvents, saveEvents } from './data/events';
@@ -126,6 +127,7 @@ export function App() {
   const goSettings = () => { setPrev(step); setStep('settings'); };
   const goProfile = () => { setPrev(step); setStep('profile'); };
   const goTickets = () => { setPrev(step); setStep('tickets'); };
+  const goScan = () => { setPrev(step); setStep('scan'); };
   const goBack = () => setStep(prev);
 
   const goOrder = (count) => {
@@ -153,7 +155,7 @@ export function App() {
   };
 
   const showCartBar = step === 'catalog';
-  const showBack = step === 'cart' || step === 'order' || step === 'settings' || step === 'profile' || step === 'tickets';
+  const showBack = step === 'cart' || step === 'order' || step === 'settings' || step === 'profile' || step === 'tickets' || step === 'scan';
   const noticeBg = theme === 'dark' ? '#3A2E12' : '#FFF4D6';
   const noticeFg = theme === 'dark' ? '#FFD479' : '#7A5B00';
 
@@ -241,6 +243,7 @@ export function App() {
                     cartCount={cartCount}
                     onOpenProfile={goProfile}
                     onOpenTickets={goTickets}
+                    onOpenScan={goScan}
                     onResetCart={() => {
                       clearCart();
                       setSnackbar(
@@ -255,6 +258,8 @@ export function App() {
                 {step === 'profile' && <ProfileStep />}
 
                 {step === 'tickets' && <MyTickets />}
+
+                {step === 'scan' && <ScanStep />}
               </Div>
 
               <ChipFly fly={fly} />

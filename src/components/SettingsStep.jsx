@@ -1,5 +1,5 @@
 import { Button, Caption, Div, Group, Header, Radio, RadioGroup, Spacing } from '@vkontakte/vkui';
-import { Icon28TicketOutline, Icon28UserOutline } from '@vkontakte/icons';
+import { Icon28QrCodeOutline, Icon28TicketOutline, Icon28UserOutline } from '@vkontakte/icons';
 import { plural } from '../lib/format';
 
 const THEME_OPTIONS = [
@@ -8,7 +8,7 @@ const THEME_OPTIONS = [
   { value: 'dark', label: 'Тёмная тема' },
 ];
 
-export function SettingsStep({ themePref, onTheme, cartCount, onOpenProfile, onOpenTickets, onResetCart }) {
+export function SettingsStep({ themePref, onTheme, cartCount, onOpenProfile, onOpenTickets, onOpenScan, onResetCart }) {
   return (
     <>
       <Group header={<Header mode="secondary">Оформление</Header>}>
@@ -43,6 +43,14 @@ export function SettingsStep({ themePref, onTheme, cartCount, onOpenProfile, onO
           <Spacing size={8} />
           <Button size="l" mode="secondary" stretched before={<Icon28TicketOutline />} onClick={onOpenTickets}>
             Мои билеты
+          </Button>
+        </Div>
+      </Group>
+
+      <Group header={<Header mode="secondary">Для организатора</Header>}>
+        <Div>
+          <Button size="l" mode="secondary" stretched before={<Icon28QrCodeOutline />} onClick={onOpenScan}>
+            Сканер QR-билетов
           </Button>
         </Div>
       </Group>

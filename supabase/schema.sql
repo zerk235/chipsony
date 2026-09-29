@@ -29,10 +29,11 @@ create policy events_read on public.events for select using (status = 'published
 -- Стартовые события для каталога (id совпадают с прошлыми прототипными).
 insert into public.events (id, title, place, date, price, seats, emoji, gradient)
 values
-  ('hack', 'Хакатон MAX — финал', 'VK, Москва', '28 сентября, 17:00', 490, 150, '🍿', 'linear-gradient(120deg,#FFB800 0%,#FF6B00 55%,#2C2C2C 55%)'),
-  ('picket', 'Пикет «Чипсоны в городе»', 'Арбат, сцена', '29 сентября, 19:00', 790, 60, '🥁', 'linear-gradient(120deg,#8B9BFF 0%,#5B5BFF 55%,#1F1F2E 55%)'),
-  ('night', 'Ночная экскурсия по офису VK', 'Ленинградский проспект 39', '2 октября, 23:00', 990, 40, '🌙', 'linear-gradient(120deg,#3EAAFF 0%,#234B9B 55%,#101426 55%)'),
-  ('workshop', 'Воркшоп «Креатив в 2 часа ночи»', 'Онлайн', '4 октября, 00:00', 0, 500, '💡', 'linear-gradient(120deg,#7BE495 0%,#2FA85C 55%,#0F2E1C 55%)')
+  ('hack', 'Хакатон MAX 2026 — питчинг команд', 'VK, Москва', '11 октября, 10:00', 490, 150, '🍿', 'linear-gradient(120deg,#FFB800 0%,#FF6B00 55%,#2C2C2C 55%)'),
+  ('picket', 'Пикет «Чипсоны в городе»', 'Арбат, сцена', '17 октября, 19:00', 790, 60, '🥁', 'linear-gradient(120deg,#8B9BFF 0%,#5B5BFF 55%,#1F1F2E 55%)'),
+  ('night', 'Ночная экскурсия по офису VK', 'Ленинградский проспект 39', '23 октября, 23:00', 990, 40, '🌙', 'linear-gradient(120deg,#3EAAFF 0%,#234B9B 55%,#101426 55%)'),
+  ('workshop', 'Воркшоп «Креатив в 2 часа ночи»', 'Онлайн', '25 октября, 00:00', 0, 500, '💡', 'linear-gradient(120deg,#7BE495 0%,#2FA85C 55%,#0F2E1C 55%)'),
+  ('demo', 'Демо-день: презентации команд', 'VK, конференц-зал', '1 ноября, 12:00', 0, 120, '🚀', 'linear-gradient(120deg,#F2709C 0%,#FF9472 50%,#11122E 50%)')
 on conflict (id) do update set
   title = excluded.title,
   place = excluded.place,
@@ -70,8 +71,14 @@ create table if not exists public.registrations (
   vk_user_id text not null,
   seats int not null default 1 check (seats > 0 and seats <= 10),
   qr_token text not null unique,
+  used_at timestamptz,
+  scanned_by text,
   created_at timestamptz not null default now()
 );
+
+-- Для баз, где таблица уже создана без полей отметки входа.
+alter table public.registrations add column if not exists used_at timestamptz;
+alter table public.registrations add column if not exists scanned_by text;
 
 alter table public.registrations enable row level security;
 
