@@ -28,7 +28,7 @@ jobs:
 
       - name: Собрать проект
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL_DEV }}
         run: npm run build
 
       - name: Подготовить конфиг (только тестовая версия)

@@ -46,9 +46,11 @@ supabase functions deploy me
 
 В GitHub: **Settings → Secrets and variables → Actions → New repository secret**
 
-- `VITE_SUPABASE_URL` — для `main` адрес боевого проекта;
-- при желании другой `VITE_SUPABASE_URL` для `dev` нельзя задать на уровне ветки,
-  поэтому деплой с тестовой базой делают вручную или отдельным workflow.
+- `VITE_SUPABASE_URL` — адрес боевого проекта, читает деплой `main`;
+- `VITE_SUPABASE_URL_DEV` — адрес тестового проекта, читает деплой `dev`.
+
+Секреты именуются по-разному, потому что секреты GitHub действуют на весь
+репозиторий, а не на одну ветку.
 
 Локально для разработки: скопировать `.env.example` в `.env` и вписать адрес.
 
