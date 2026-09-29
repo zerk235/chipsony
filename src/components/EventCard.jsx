@@ -2,12 +2,16 @@ import { Button, Caption, Card, Div, Headline, Spacing, Title } from '@vkontakte
 import { Icon28AddOutline, Icon28MinusOutline } from '@vkontakte/icons';
 import { BRAND_COLOR, money, placesWord, primaryStyle } from '../lib/format';
 
-export function EventCard({ event, count, platform, onAdd, onInc, onDec }) {
+export function EventCard({ event, count, isGoing, platform, onAdd, onInc, onDec, onOpen }) {
   const left = Math.max(0, event.seats - count);
 
   return (
     <Div>
-      <Card mode="shadow">
+      <Card
+        mode="shadow"
+        onClick={onOpen}
+        style={{ cursor: 'pointer' }}
+      >
         <div
           data-chip={event.id}
           style={{
@@ -23,6 +27,25 @@ export function EventCard({ event, count, platform, onAdd, onInc, onDec }) {
         </div>
         <Div>
           <Title level="3" weight="2">{event.title}</Title>
+          {isGoing && (
+            <>
+              <Spacing size={6} />
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '3px 10px',
+                  borderRadius: 16,
+                  background: 'var(--vkui--color_background_positive, rgba(55,178,77,.15))',
+                  color: 'var(--vkui--color_text_positive, #26A354)',
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
+                Я иду ✓
+              </span>
+            </>
+          )}
           <Spacing size={4} />
           <Caption className="vkui--ToneNeutral">{event.date} · {event.place}</Caption>
           <Spacing size={10} />
@@ -41,13 +64,16 @@ export function EventCard({ event, count, platform, onAdd, onInc, onDec }) {
                 mode="primary"
                 disabled={left === 0}
                 before={<Icon28AddOutline />}
-                onClick={(ev) => onAdd(event.id, ev)}
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  onAdd(event.id, ev);
+                }}
                 style={left === 0 ? undefined : primaryStyle(platform)}
               >
                 В корзину
               </Button>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }} onClick={(ev) => ev.stopPropagation()}>
                 <Button
                   size="l"
                   mode="secondary"

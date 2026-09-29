@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button, Caption, Div, Group, Header, Headline, Placeholder, ScreenSpinner, Spacing } from '@vkontakte/vkui';
+import { Button, Caption, Div, Group, Header, Headline, Placeholder, Spacing } from '@vkontakte/vkui';
 import { Icon28TicketOutline } from '@vkontakte/icons';
 import QRCode from 'react-qr-code';
 import { plural } from '../lib/format';
 import { request } from '../lib/api';
+import { SkeletonList } from './SkeletonCard';
 
 export function MyTickets() {
   const [tickets, setTickets] = useState(null);
@@ -27,7 +28,11 @@ export function MyTickets() {
   }, []);
 
   if (tickets === null) {
-    return <ScreenSpinner state="loading" />;
+    return (
+      <Group>
+        <SkeletonList rows={2} />
+      </Group>
+    );
   }
 
   if (!tickets.length) {
