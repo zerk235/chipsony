@@ -1,5 +1,6 @@
 import { Button, Caption, Div, Group, Headline, Placeholder, Spacing, Title } from '@vkontakte/vkui';
 import {
+  Icon16CheckCircleOutline,
   Icon28AddOutline,
   Icon28CalendarOutline,
   Icon28PlaceOutline,
@@ -54,7 +55,7 @@ export function EventStep({ event, count, isGoing, platform, onAdd, onInc, onDec
         <Spacing size={14} />
         {isGoing && (
           <>
-            <BadgeGoing />
+            <GoingNote />
             <Spacing size={12} />
           </>
         )}
@@ -154,22 +155,11 @@ export function EventStep({ event, count, isGoing, platform, onAdd, onInc, onDec
   );
 }
 
-function BadgeGoing() {
+function GoingNote() {
   return (
-    <div
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '6px 12px',
-        borderRadius: 20,
-        background: 'var(--vkui--color_background_positive, rgba(55,178,77,.15))',
-        color: 'var(--vkui--color_text_positive, #26A354)',
-        fontWeight: 600,
-        fontSize: 14,
-      }}
-    >
-      Я иду ✓
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#2BB673' }}>
+      <Icon16CheckCircleOutline width={18} height={18} />
+      <span style={{ fontWeight: 600, fontSize: 14 }}>Вы зарегистрированы</span>
     </div>
   );
 }
