@@ -43,6 +43,14 @@ export const EVENTS = [
 
 const EVENTS_KEY = 'chipsony:events';
 
+/** Афиша с сервера: обновляем кэш, чтобы каталог работал и офлайн. */
+export function saveEvents(events) {
+  if (!Array.isArray(events) || !events.length) return;
+  try {
+    localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+  } catch {}
+}
+
 export function loadEvents() {
   try {
     const raw = localStorage.getItem(EVENTS_KEY);

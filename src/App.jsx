@@ -15,7 +15,6 @@ import {
 import { Icon28ArrowLeftOutline, Icon28RefreshOutline } from '@vkontakte/icons';
 import '@vkontakte/vkui/dist/vkui.css';
 import './styles.css';
-import { loadEvents } from './data/events';
 import { loadCart, loadThemePref, saveCart } from './lib/storage';
 import { useColorScheme } from './lib/useColorScheme';
 import { showVkSnackbar } from './lib/vk';
@@ -26,8 +25,11 @@ import { OrderStep } from './components/OrderStep';
 import { SuccessStep } from './components/SuccessStep';
 import { SettingsStep } from './components/SettingsStep';
 import { ProfileStep } from './components/ProfileStep';
+import { MyTickets } from './components/MyTickets';
 import { CartBar } from './components/CartBar';
 import { ChipFly } from './components/ChipFly';
+import { loadEvents, saveEvents } from './data/events';
+import { request } from './lib/api';
 
 export function App() {
   const platform = usePlatform();
@@ -38,7 +40,7 @@ export function App() {
   const [step, setStep] = useState('catalog');
   const [prev, setPrev] = useState('catalog');
   const [cart, setCart] = useState(loadCart);
-  const [result, setResult] = useState({ count: 1, total: 0 });
+  const [result, setResult] = useState({ tickets: [] });
   const [snackbar, setSnackbar] = useState(null);
   const [online, setOnline] = useState(() => navigator.onLine !== false);
 
@@ -48,6 +50,24 @@ export function App() {
   useEffect(() => {
     saveCart(cart);
   }, [cart]);
+
+  useEffect(() => {
+    let ignore = false;
+    request('events')
+      .then((payload) => {
+        if (ignore) return;
+        if (Array.isArray(payload.events) && payload.events.length) {
+          setEvents(payload.events);
+          saveEvents(payload.events);
+        }
+      })
+      .catch((err) => {
+        console.warn('[chipsony] афиша не загрузилась, показываем кэш:', err);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     const goOnline = () => setOnline(true);
@@ -105,21 +125,23 @@ export function App() {
   const goCart = () => { setPrev('catalog'); setStep('cart'); };
   const goSettings = () => { setPrev(step); setStep('settings'); };
   const goProfile = () => { setPrev(step); setStep('profile'); };
+  const goTickets = () => { setPrev(step); setStep('tickets'); };
   const goBack = () => setStep(prev);
 
-  const goOrder = (count, total) => {
+  const goOrder = (count) => {
     setPrev(step === 'cart' ? 'cart' : 'catalog');
-    setResult({ count, total });
+    setResult({ count });
     setStep('order');
   };
 
-  const finishOrder = (count, total) => {
-    setResult({ count, total });
+  const finishOrder = (tickets) => {
+    const totalCount = tickets.reduce((s, t) => s + (Number(t.registration?.seats) || 0), 0);
+    setResult({ tickets });
     clearCart();
     setStep('success');
     setSnackbar(
       <Snackbar onClose={() => setSnackbar(null)} duration={2500}>
-        Заказ {count} билетов оформлен
+        Заказ {totalCount} билетов оформлен
       </Snackbar>,
     );
     showVkSnackbar('Заказ оформлен');
@@ -131,7 +153,7 @@ export function App() {
   };
 
   const showCartBar = step === 'catalog';
-  const showBack = step === 'cart' || step === 'order' || step === 'settings' || step === 'profile';
+  const showBack = step === 'cart' || step === 'order' || step === 'settings' || step === 'profile' || step === 'tickets';
   const noticeBg = theme === 'dark' ? '#3A2E12' : '#FFF4D6';
   const noticeFg = theme === 'dark' ? '#FFD479' : '#7A5B00';
 
@@ -198,10 +220,7 @@ export function App() {
                       id: e.id,
                       title: e.title,
                       count: cart[e.id],
-                      subtotal: cart[e.id] * e.price,
                     }))}
-                    totalCount={result.count}
-                    total={result.total}
                     platform={platform}
                     onDone={finishOrder}
                   />
@@ -209,8 +228,7 @@ export function App() {
 
                 {step === 'success' && (
                   <SuccessStep
-                    totalCount={result.count}
-                    total={result.total}
+                    tickets={result.tickets}
                     platform={platform}
                     onReset={goCatalog}
                   />
@@ -222,6 +240,7 @@ export function App() {
                     onTheme={setThemePref}
                     cartCount={cartCount}
                     onOpenProfile={goProfile}
+                    onOpenTickets={goTickets}
                     onResetCart={() => {
                       clearCart();
                       setSnackbar(
@@ -234,6 +253,8 @@ export function App() {
                 )}
 
                 {step === 'profile' && <ProfileStep />}
+
+                {step === 'tickets' && <MyTickets />}
               </Div>
 
               <ChipFly fly={fly} />
