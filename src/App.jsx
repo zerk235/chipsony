@@ -194,10 +194,11 @@ export function App() {
           <View activePanel="main" platform={platform}>
             <Panel id="main">
               <PanelHeader
+                key={`${theme}:${themePref}`}
                 separator={false}
                 before={
                   showBack ? (
-                    <IconButton aria-label="Назад" onClick={goBack}>
+                    <IconButton key={`${theme}:${themePref}`} aria-label="Назад" onClick={goBack}>
                       <Icon28ArrowLeftOutline />
                     </IconButton>
                   ) : null
@@ -298,6 +299,7 @@ export function App() {
                     onOpenProfile={goProfile}
                     onOpenTickets={goTickets}
                     onOpenScan={goScan}
+                    onExit={goCatalog}
                     onResetCart={() => {
                       clearCart();
                       setSnackbar(

@@ -8,9 +8,15 @@ const THEME_OPTIONS = [
   { value: 'dark', label: 'Тёмная тема' },
 ];
 
-export function SettingsStep({ themePref, onTheme, cartCount, onOpenProfile, onOpenTickets, onOpenScan, onResetCart }) {
+export function SettingsStep({ themePref, onTheme, cartCount, onOpenProfile, onOpenTickets, onOpenScan, onExit, onResetCart }) {
   return (
     <>
+      <Div>
+        <Button size="l" mode="secondary" stretched onClick={onExit}>
+          ← Вернуться в афишу
+        </Button>
+      </Div>
+
       <Group header={<Header mode="secondary">Оформление</Header>}>
         <RadioGroup>
           {THEME_OPTIONS.map((opt) => (
