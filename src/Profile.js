@@ -1,10 +1,10 @@
 // Модуль личного профиля пользователя.
 //
-// Аутентификации в Supabase нет: пользователь опознаётся по подписанному
-// initData от VK, его проверяет Edge Function supabase/functions/me.
+// Аутентификации в Supabase нет: пользователь опознаётся по параметрам запуска
+// VK (подпись sign), их проверяет Edge Function supabase/functions/me.
 // Поэтому здесь нет ни supabase.auth, ни anon-ключа — только HTTP-запросы
-// к функции с initData внутри.
-import { getInitData, initDataDiagnostics } from './lib/vkUser';
+// к функции с сырыми параметрами запуска внутри.
+import { getLaunchQuery, getVkUserInfo, launchDiagnostics } from './lib/vkUser';
 
 const BASE = (import.meta.env.VITE_PROFILE_ENDPOINT || '').trim()
   || (import.meta.env.VITE_SUPABASE_URL
@@ -20,17 +20,19 @@ async function call(body) {
     throw new Error('Профиль пока не подключён: не задан VITE_SUPABASE_URL');
   }
 
-  const initData = await getInitData();
-  if (!initData) {
-    const diag = await initDataDiagnostics();
-    console.error('[chipsony] initData не найден:', diag);
+  const launchQuery = getLaunchQuery();
+  if (!launchQuery) {
+    const diag = await launchDiagnostics();
+    console.error('[chipsony] параметры запуска не найдены:', diag);
     throw new Error(`Не удалось получить данные запуска от VK (${diag})`);
   }
+
+  const userInfo = await getVkUserInfo();
 
   const response = await fetch(BASE, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ initData, ...body }),
+    body: JSON.stringify({ launchQuery, userInfo, ...body }),
   });
 
   let payload = null;
