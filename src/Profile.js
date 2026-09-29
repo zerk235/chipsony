@@ -4,7 +4,7 @@
 // initData от VK, его проверяет Edge Function supabase/functions/me.
 // Поэтому здесь нет ни supabase.auth, ни anon-ключа — только HTTP-запросы
 // к функции с initData внутри.
-import { getInitData } from './lib/vkUser';
+import { getInitData, initDataDiagnostics } from './lib/vkUser';
 
 const BASE = (import.meta.env.VITE_PROFILE_ENDPOINT || '').trim()
   || (import.meta.env.VITE_SUPABASE_URL
@@ -22,7 +22,7 @@ async function call(body) {
 
   const initData = await getInitData();
   if (!initData) {
-    throw new Error('Не удалось получить данные запуска от VK');
+    throw new Error(`Не удалось получить данные запуска от VK (${initDataDiagnostics()})`);
   }
 
   const response = await fetch(BASE, {
