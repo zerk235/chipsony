@@ -1,5 +1,5 @@
 import { Button, Caption, Div, Group, Header, Radio, RadioGroup, Spacing } from '@vkontakte/vkui';
-import { Icon28UserOutline } from '@vkontakte/icons';
+import { Icon28TicketOutline, Icon28UserOutline } from '@vkontakte/icons';
 import { plural } from '../lib/format';
 
 const THEME_OPTIONS = [
@@ -8,7 +8,7 @@ const THEME_OPTIONS = [
   { value: 'dark', label: 'Тёмная тема' },
 ];
 
-export function SettingsStep({ themePref, onTheme, cartCount, onOpenProfile, onResetCart }) {
+export function SettingsStep({ themePref, onTheme, cartCount, onOpenProfile, onOpenTickets, onResetCart }) {
   return (
     <>
       <Group header={<Header mode="secondary">Оформление</Header>}>
@@ -40,14 +40,17 @@ export function SettingsStep({ themePref, onTheme, cartCount, onOpenProfile, onR
           <Button size="l" mode="secondary" stretched before={<Icon28UserOutline />} onClick={onOpenProfile}>
             Мой профиль
           </Button>
+          <Spacing size={8} />
+          <Button size="l" mode="secondary" stretched before={<Icon28TicketOutline />} onClick={onOpenTickets}>
+            Мои билеты
+          </Button>
         </Div>
       </Group>
 
       <Group header={<Header mode="secondary">О приложении</Header>}>
         <Div>
           <Caption className="vkui--ToneNeutral" style={{ display: 'block' }}>
-            Чипсоны — афиша событий. Билеты пока демонстрационные: настоящие QR-билеты появятся после
-            подключения базы данных.
+            Чипсоны — афиша событий. Регистрация бесплатная: билет с QR-кодом приходит сразу.
           </Caption>
         </Div>
       </Group>
