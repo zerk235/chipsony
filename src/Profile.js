@@ -32,6 +32,44 @@ async function probeReachability() {
   return `Проверка сети: ${parts.join(', ')}${internet ? '' : ' (похоже, нет сети вообще)'}.`;
 }
 
+/** «Отпечаток» запроса из браузера: какими способами до сервера дотягивается. */
+async function fetchFingerprint() {
+  const out = [];
+  const probe = async (label, opts) => {
+    try {
+      await fetch(BASE, { ...opts, cache: 'no-store' });
+      out.push(`${label}:ok`);
+    } catch (e) {
+      out.push(`${label}:fail`);
+    }
+  };
+  await Promise.all([
+    probe('cors', { method: 'POST', body: '{}' }),
+    probe('noCors', { method: 'POST', mode: 'no-cors', body: '{}' }),
+    new Promise((resolve) => {
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', BASE, true);
+        xhr.onload = () => {
+          out.push(`xhr:ok(${xhr.status})`);
+          resolve();
+        };
+        xhr.onerror = () => {
+          out.push('xhr:fail');
+          resolve();
+        };
+        xhr.send('{}');
+      } catch (e) {
+        out.push('xhr:fail');
+        resolve();
+      }
+    }),
+  ]);
+  out.push(`secure:${window.isSecureContext}`);
+  out.push(`origin:${window.location.origin}`);
+  return out.join(',');
+}
+
 async function call(body) {
   if (!BASE) {
     throw new Error('Профиль пока не подключён: не задан VITE_SUPABASE_URL');
@@ -58,7 +96,8 @@ async function call(body) {
   } catch (err) {
     console.error('[chipsony] fetch не смог достучаться до функции:', err);
     const probe = await probeReachability();
-    throw new Error(`Сервер профиля недоступен (${new URL(BASE).host}). ${probe}`);
+    const fp = await fetchFingerprint();
+    throw new Error(`Сервер профиля недоступен (${new URL(BASE).host}). ${probe} Fingerprint: ${fp}`);
   }
 
   let payload = null;
