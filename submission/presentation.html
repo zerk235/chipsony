@@ -1,0 +1,202 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>Чипсоны — презентация</title>
+<style>
+  @page { size: 1280px 760px; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #111; color: #1a1a1a; }
+  .slide {
+    width: 1280px; height: 760px; padding: 56px 72px;
+    background: #fff; page-break-after: always; overflow: hidden;
+    display: flex; flex-direction: column; position: relative;
+  }
+  .slide:last-child { page-break-after: auto; }
+  .brand {
+    position: absolute; top: 28px; right: 40px; font-size: 15px;
+    color: #8a8a8a; letter-spacing: 2px; font-weight: 600;
+  }
+  h1 { font-size: 58px; line-height: 1.1; margin-bottom: 18px; }
+  h2 { font-size: 40px; line-height: 1.15; margin-bottom: 28px; color: #111; }
+  .accent { color: #e8730c; }
+  .sub { font-size: 24px; color: #555; line-height: 1.45; }
+  .grow { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  ul { list-style: none; }
+  li { font-size: 25px; line-height: 1.5; margin-bottom: 18px; padding-left: 40px; position: relative; }
+  li::before { content: '🍿'; position: absolute; left: 0; top: 1px; font-size: 22px; }
+  .tech {
+    background: #14161c; color: #d7f5c5; border-radius: 16px;
+    padding: 24px 30px; font-family: Consolas, monospace; font-size: 21px;
+    line-height: 1.75; margin-top: 26px;
+  }
+  .tech b { color: #ffd479; font-weight: 600; }
+  .steps { display: flex; gap: 18px; align-items: stretch; }
+  .step {
+    flex: 1; background: #f6f6f8; border-radius: 18px; padding: 24px 20px;
+    text-align: center; border-top: 6px solid #e8730c;
+  }
+  .step .n { font-size: 34px; font-weight: 800; color: #e8730c; }
+  .step .t { font-size: 21px; font-weight: 700; margin: 8px 0 6px; }
+  .step .d { font-size: 17px; color: #555; line-height: 1.4; }
+  .cols { display: flex; gap: 26px; }
+  .col { flex: 1; }
+  .card { background: #f6f6f8; border-radius: 16px; padding: 22px 26px; margin-bottom: 16px; }
+  .card h3 { font-size: 23px; margin-bottom: 8px; color: #e8730c; }
+  .card p { font-size: 19px; line-height: 1.45; color: #333; }
+  .kpi { display: flex; gap: 20px; margin-top: 8px; }
+  .kpi > div {
+    flex: 1; background: linear-gradient(135deg,#FFB800,#FF6B00);
+    color: #fff; border-radius: 16px; padding: 20px; text-align: center;
+  }
+  .kpi .big { font-size: 44px; font-weight: 800; background: none; padding: 0; border-radius: 0; }
+  .kpi .cap { font-size: 17px; margin-top: 6px; background: none; padding: 0; border-radius: 0; }
+  .foot { font-size: 17px; color: #888; margin-top: auto; padding-top: 14px; }
+  .flow { font-size: 24px; line-height: 2.1; }
+  .flow b { color: #e8730c; }
+  .pill {
+    display: inline-block; background: #eaf7ef; color: #1e7e46;
+    border: 2px solid #2bb673; border-radius: 12px; padding: 4px 14px;
+    font-size: 22px; font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<!-- 1: Титул + техническая информация -->
+<section class="slide" id="s1">
+  <div class="brand">ХАКАТОН MAX</div>
+  <div class="grow">
+    <h1>«Чипсоны» <span class="accent">🍿</span><br/>Билеты на события без очередей</h1>
+    <p class="sub">Мини-приложение: афиша → регистрация за один клик → QR-билет → приём гостя сканером</p>
+    <div class="tech">
+      <b>Ссылка на решение:</b> https://vk.com/app54788608<br/>
+      <b>Код (зафиксированная версия):</b> https://github.com/zerk235/chipsony — коммит 8441bec (main)<br/>
+      <b>Стек:</b> React 18 + VKUI 8 · Supabase (Edge Functions на Deno, PostgreSQL)<br/>
+      <b>Проверка:</b> открыть ссылку → «В корзину» → «Зарегистрироваться» → QR появился; «Настройки → Сканер QR» принимает билет
+    </div>
+  </div>
+  <div class="foot">Трек и название команды — заполняются перед загрузкой</div>
+</section>
+
+<!-- 2: Проблема -->
+<section class="slide" id="s2">
+  <div class="brand">ЧИПСОНЫ</div>
+  <div class="grow">
+    <h2>Проблема: на событие сложно попасть</h2>
+    <ul>
+      <li><b>Организатору</b> — продажи/записи «вручную» в чат-листах: дубли, перепродажи, люди теряют подтверждения</li>
+      <li><b>Гостю</b> — регистрация разбросана по формам, лендингам и скриншотам «сохранил себе»</li>
+      <li><b>На входе</b> — очередь: организатор вручную сверяет фамилии по телефону, ошибки и напряжение</li>
+      <li>Всё это рушится на 300+ гостях — типичном размере демо-дня, митапа или хакатона</li>
+    </ul>
+    <div class="cols">
+      <div class="col card"><h3>Перепродажи</h3><p>Лимит мест не защищён на уровне данных — двое одновременно занимают последнее место</p></div>
+      <div class="col card"><h3>Нет единого входа</h3><p>Билет живёт в скриншоте, который нельзя проверить, подделать — легко</p></div>
+      <div class="col card"><h3>Медленный вход</h3><p>Сверка списка на входе — 15–30 секунд на гостя, очередь на пороге</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3: Решение -->
+<section class="slide" id="s3">
+  <div class="brand">ЧИПСОНЫ</div>
+  <div class="grow">
+    <h2>Решение: одно приложение и <span class="accent">одна точка правды</span></h2>
+    <div class="cols">
+      <div class="col">
+        <div class="card"><h3>1. Афиша из БД</h3><p>События, даты, места и лимиты живут в Postgres; офлайн-кэш, если сеть пропала</p></div>
+        <div class="card"><h3>2. Регистрация в один клик</h3><p>Без отдельных форм: ВКонтакте уже знает, кто ты. Подпись initData проверяется на сервере</p></div>
+        <div class="card"><h3>3. QR-билет</h3><p>Подписанный токен в QR — виден сразу и в «Мои билеты», на любом устройстве</p></div>
+      </div>
+      <div class="col">
+        <div class="card"><h3>4. Сканер для организатора</h3><p>Камера телефона принимает гостя за секунду: «Гость прибыл ✓», повтор — «Уже отмечен»</p></div>
+        <div class="card"><h3>5. Защита от перепродажи</h3><p>Триггер в БД атомарно следит, чтобы занято не превысило лимит мест — даже при гонке</p></div>
+        <div class="card"><h3>6. Без интеграций и касс</h3><p>Ставить на площадку можно сегодня: только VK-аккаунт и база</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4: Пользовательский сценарий -->
+<section class="slide" id="s4">
+  <div class="brand">ЧИПСОНЫ</div>
+  <div class="grow">
+    <h2>Пользовательский сценарий</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div class="t">Афиша</div><div class="d">Открывает мини-приложение, видит события с датами и местами</div></div>
+      <div class="step"><div class="n">2</div><div class="t">Выбор</div><div class="d">Тап по карточке: описание, что взять, как добраться</div></div>
+      <div class="step"><div class="n">3</div><div class="t">Корзина</div><div class="d">«Зарегистрироваться» — одно нажатие, без анкет</div></div>
+      <div class="step"><div class="n">4</div><div class="t">QR-билет</div><div class="d">Сразу на экране и в «Мои билеты» — на другом телефоне тоже</div></div>
+      <div class="step"><div class="n">5</div><div class="t">Вход</div><div class="d">Организатор сканирует: «Гость прибыл ✓» за секунду</div></div>
+    </div>
+    <p class="sub" style="margin-top:30px">
+      Гость отмечается <span class="pill">Я иду ✓</span> в афише — приложение помнит регистрацию,
+      повторный вход по QR невозможен.
+    </p>
+    <div class="foot">Двухтелефонный тест пройден: билеты синхронны между устройствами, камера в вебвью работает</div>
+  </div>
+</section>
+
+<!-- 5: Эффект -->
+<section class="slide" id="s5">
+  <div class="brand">ЧИПСОНЫ</div>
+  <div class="grow">
+    <h2>Эффект</h2>
+    <div class="kpi">
+      <div><div class="big">1 клик</div><div class="cap">регистрация вместо формы вручную</div></div>
+      <div><div class="big">~1 сек</div><div class="cap">вход гостя через сканер вместо 15–30 сек сверки фамилий</div></div>
+      <div><div class="big">0</div><div class="cap">перепродаж: лимит мест защищён в БД атомарно</div></div>
+      <div><div class="big">100%</div><div class="cap">билетов на одном экране, синхронно между устройствами</div></div>
+    </div>
+    <div class="cols" style="margin-top:26px">
+      <div class="col card"><h3>Для площадки</h3><p>Вход без очередей и ручного списка: персонал сканирует с любого телефона, без обучения</p></div>
+      <div class="col card"><h3>Для участника</h3><p>Билет живёт в ВК: не теряется в почте и мессенджере, доступен офлайн-кэш афиши</p></div>
+      <div class="col card"><h3>Для аналитики</h3><p>Кто пришёл, кто нет, в какие события идут — данные о визитах накапливаются автоматически</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6: Масштабирование -->
+<section class="slide" id="s6">
+  <div class="brand">ЧИПСОНЫ</div>
+  <div class="grow">
+    <h2>Потенциал масштабирования</h2>
+    <div class="cols">
+      <div class="col">
+        <div class="card"><h3>Роли и права</h3><p>Организатор — отдельный доступ к сканеру и списку гостей; площадка — полная аналитика события</p></div>
+        <div class="card"><h3>Платежи</h3><p>VK Pay для платных событий: тарифы, промокоды, возвраты при отмене</p></div>
+        <div class="card"><h3>Напоминания</h3><p>Push о событии и чек-ин за день до него — рост посещаемости</p></div>
+      </div>
+      <div class="col">
+        <div class="card"><h3>Сети событий</h3><p>Один сервис — много площадок: клубы, вузы, оффлайн-школы, корпоративные офлайны</p></div>
+        <div class="card"><h3>Отмены и лист ожидания</h3><p>Освободившееся место достаётся ожидающим в листе — выручка площадки растёт</p></div>
+        <div class="card"><h3>Экосистема MAX</h3><p>Формат чат-бота/мини-приложения повторяем для сообществ и каналов: тот же сценарий, новые каналы привлечения</p></div>
+      </div>
+    </div>
+    <div class="foot">Релизные шаги (описание, иконка, категории) — в консоли разработчика; MVP уже работает на проде</div>
+  </div>
+</section>
+
+<!-- 7: Как проверить -->
+<section class="slide" id="s7">
+  <div class="brand">ЧИПСОНЫ</div>
+  <div class="grow">
+    <h2>Как проверить решение <span class="accent">за 2 минуты</span></h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div class="t">Открыть</div><div class="d">https://vk.com/app54788608 (любой аккаунт ВК)</div></div>
+      <div class="step"><div class="n">2</div><div class="t">Зарегистрироваться</div><div class="d">Любое событие → В корзину → Зарегистрироваться → QR на экране</div></div>
+      <div class="step"><div class="n">3</div><div class="t">Проверить билет</div><div class="d">Настройки → Мои билеты → Показать QR (работает и со второго телефона)</div></div>
+      <div class="step"><div class="n">4</div><div class="t">Принять гостя</div><div class="d">Настройки → Сканер QR → камера или ручной ввод токена</div></div>
+    </div>
+    <div class="tech" style="margin-top:30px">
+      <b>Код:</b> github.com/zerk235/chipsony @ 8441bec (ветка main, архив в комплекте)<br/>
+      <b>БД и API:</b> Supabase — функции events / register / tickets / scan / me<br/>
+      <b>Аутентификация:</b> подпись VK initData (HMAC-SHA256), ключ — «Защитный ключ» приложения
+    </div>
+    <div class="foot">Чеклист QA на трёх платформах (Desktop / iOS-Android / m.vk.ru) — в репозитории, QA.md</div>
+  </div>
+</section>
+
+</body>
+</html>
